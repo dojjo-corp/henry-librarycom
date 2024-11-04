@@ -46,7 +46,7 @@ dependencies:
 
 flutter_launcher_icons:
   android: true 
-  ios: true
+  ios: false
   image_path: "assets/icons/community.png"
 
 dev_dependencies:

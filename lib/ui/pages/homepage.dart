@@ -2,13 +2,17 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:librarycom/services/library_api/gutenberg_service.dart';
+import 'package:librarycom/models/book_model.dart';
+import 'package:librarycom/services/library_api/openlibrary_service.dart';
 import 'package:librarycom/ui/components/my_drawer.dart';
+import 'package:librarycom/ui/pages/book_details.dart';
 import 'package:librarycom/utils/global_methods.dart';
 // import 'package:librarycom/services/library_api/gutenberg_service.dart';
 
 class Homepage extends StatefulWidget {
-  const Homepage({super.key});
+  const Homepage({
+    super.key,
+  });
 
   @override
   State<Homepage> createState() => _HomepageState();
@@ -17,14 +21,15 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   late final TextEditingController searchController;
   String searchedTerm = "";
-  List<Map<String, dynamic>> searchResults = [];
+  List<BookModel> searchResults = [];
 
+  // ignore: prefer_final_fields
   bool _isLoading = false;
 
   _getBooks(String searchTerm) async {
     try {
-      final gutenberg = GutenbergService();
-      final searchedBooks = await gutenberg.searchBooks(searchTerm);
+      final libraryService = OpenLibraryService();
+      final searchedBooks = await libraryService.searchBooks(searchTerm);
 
       if (mounted) {
         setState(() {
@@ -47,6 +52,7 @@ class _HomepageState extends State<Homepage> {
       searchController.clear();
     });
   }
+
   @override
   void initState() {
     super.initState();
@@ -71,49 +77,71 @@ class _HomepageState extends State<Homepage> {
         title: TextFormField(
           controller: searchController,
           decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderSide: BorderSide.none,
-                borderRadius: BorderRadius.circular(12),
+            border: OutlineInputBorder(
+              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            filled: true,
+            fillColor: Colors.white70,
+            suffixIcon: IconButton(
+              onPressed: clearSearch,
+              icon: const Icon(
+                Icons.clear_rounded,
+                color: Color.fromARGB(255, 220, 158, 158),
               ),
-              filled: true,
-              fillColor: Colors.white70,
-              suffixIcon: IconButton(
-                  onPressed: clearSearch,
-                  icon: const Icon(
-                    Icons.clear_rounded,
-                    color: Color.fromARGB(255, 220, 158, 158),
-                  ))),
+            ),
+          ),
           onChanged: (String? value) {
             if (value == null) return;
             _getBooks(value);
           },
         ),
       ),
-      body: GridView.builder(
+      body: ListView.builder(
         itemCount: searchResults.length,
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: MediaQuery.sizeOf(context).width * 0.5,
-        ),
+        // gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        // maxCrossAxisExtent: MediaQuery.sizeOf(context).width * 0.5,
+        // ),
         itemBuilder: (context, index) {
+          if (searchResults.isEmpty) {
+            return const Center(
+              child: Text("Search book title above..."),
+            );
+          }
           final book = searchResults[index];
 
           return ListTile(
-            leading: Icon(
-              Icons.menu_book_rounded,
-              color: Theme.of(context).primaryColor.withOpacity(0.6),
+            leading: Image.network(
+              book.coverURL,
+              height: 100,
+              width: 80,
+              color: Colors.grey[400],
             ),
             title: Text(
-              book["title"],
+              book.topic,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
               ),
             ),
             subtitle: Text(
-              book["link"],
+              book.synopsis,
               style: TextStyle(
                 color: Colors.grey[800]!,
               ),
+              overflow: TextOverflow.ellipsis,
+              softWrap: true,
+              maxLines: 2,
             ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookDetailsPage(
+                    model: book,
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

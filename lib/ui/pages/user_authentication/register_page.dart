@@ -40,7 +40,6 @@ class _RegisterPageState extends State<RegisterPage> {
         await store.createUserDoc(
           email: emailController.text.trim(),
           username: usernameController.text.trim(),
-          emoteURL: "",
         );
 
         if (mounted) {
